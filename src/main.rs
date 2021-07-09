@@ -57,10 +57,8 @@ fn get_todos(path: &str, todos: &mut Vec<String>) -> Result<(), std::io::Error> 
     for line in contents.lines() {
         if line.contains("TODO") {
             let (_, comment) = line.split_once("TODO").unwrap();
-            let cleaned_comment = comment.replace(":", "")
-                                                .trim()
-                                                .to_owned();
-            todos.push(cleaned_comment.to_owned())
+            let cleaned_comment = comment.replace(":", "").trim().to_owned();
+            todos.push(cleaned_comment)
         }
     }
 
