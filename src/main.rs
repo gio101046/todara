@@ -21,40 +21,39 @@ fn main() {
         return
     }
 
-    let todos = traverse_dir(&args[1]).unwrap();
+    let mut todos = vec!();
+    traverse_dir(&args[1], &mut todos).unwrap();
     for todo in todos {
         println!("TODO: {}", todo.green());
     }
 }
 
-fn traverse_dir(path: &str) -> Result<Vec<String>, std::io::Error> {
-    let mut todos = Vec::new();
+fn traverse_dir(path: &str, todos: &mut Vec<String>) -> Result<(), std::io::Error> {
+    let objects = fs::read_dir(path.to_owned())?;
 
-    let objects = fs::read_dir(path.to_owned()).unwrap();
     for result in objects {
-        let obj_path = result.unwrap().path();
+        let obj_path = result?.path();
         let obj_str = obj_path.to_str().unwrap();
-        let obj_metadata = fs::metadata(obj_str).unwrap();
+        let obj_metadata = fs::metadata(obj_str)?;
 
         if obj_metadata.is_dir() {
-            println!("DIRC: {}", obj_str.yellow());
-            todos.append(&mut traverse_dir(obj_str).unwrap());
+            // println!("DIRC: {}", obj_str.yellow());
+            traverse_dir(obj_str, todos)?;
         }
         else if obj_metadata.is_file() {
             if obj_str.ends_with(".py") {
-                println!("FILE: {}", obj_str.yellow());
-                todos.append(&mut get_todos(obj_str).unwrap());
+                // println!("FILE: {}", obj_str.yellow());
+                get_todos(obj_str, todos)?;
             }
         }
     }
     
-    Ok(todos)
+    Ok(())
 }
 
-fn get_todos(path: &str) -> Result<Vec<String>, std::io::Error> {
-    let mut todos = Vec::new();
+fn get_todos(path: &str, todos: &mut Vec<String>) -> Result<(), std::io::Error> {
+    let contents = fs::read_to_string(path)?;
 
-    let contents = fs::read_to_string(path).unwrap();
     for line in contents.lines() {
         if line.contains("TODO") {
             let (_, comment) = line.split_once("TODO").unwrap();
@@ -65,5 +64,5 @@ fn get_todos(path: &str) -> Result<Vec<String>, std::io::Error> {
         }
     }
 
-    Ok(todos)
+    Ok(())
 }
