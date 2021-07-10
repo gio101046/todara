@@ -54,7 +54,7 @@ fn traverse_dir(path: &Path, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
     let objects = match fs::read_dir(path) {
         Ok(o) => { o },
         Err(e) => {
-            println!("ERR: {} {}", path.display(), e);
+            println!("{}: {} {}", "ERR".red(), path.display(), e.to_string().red());
             return Ok(())
         }
     };
@@ -103,7 +103,7 @@ fn get_todos(path: &PathBuf, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
     let content = match fs::read_to_string(path) {
         Ok(c) => { c }
         Err(e) => {
-            println!("ERR: {} {}", path.display(), e);
+            println!("{} {} {}", "ERR:".red(), path.display(), e.to_string().red());
             String::from("")
         }
     };
