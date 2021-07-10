@@ -8,3 +8,4 @@ edition = "2018"
 [dependencies]
 colored = "2.0.0"
 gitignore = "1.0.7"
+path-absolutize = "3.0.10"
