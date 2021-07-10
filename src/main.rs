@@ -7,6 +7,7 @@ use colored::Colorize;
 use gitignore;
 use path_absolutize::*;
 
+// TODO deal with the excessive unwrap calls
 fn main() {
     let args: Vec<String> = env::args().collect();
     if args.len() <= 1{
@@ -50,12 +51,18 @@ fn main() {
 }
 
 fn traverse_dir(path: &Path, todos: &mut Vec<Todo>) -> Result<(), std::io::Error> {    
-    let objects = fs::read_dir(path)?;
+    let objects = match fs::read_dir(path) {
+        Ok(o) => { o },
+        Err(e) => {
+            println!("ERR: {} {}", path.display(), e);
+            return Ok(())
+        }
+    };
 
     for result in objects {
-        let obj_path = result?.path();
+        let obj_path = result.unwrap().path();
         if obj_path.is_dir() {
-            traverse_dir(&obj_path, todos)?;
+            traverse_dir(&obj_path, todos).unwrap();
         }
         else if obj_path.is_file() {
             let extension = match obj_path.extension() {
@@ -65,7 +72,7 @@ fn traverse_dir(path: &Path, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
 
             // TODO support other files besides .py
             if extension == "py" { 
-                get_todos(&obj_path, todos)?;
+                get_todos(&obj_path, todos).unwrap();
             }
         }
     }
@@ -82,7 +89,7 @@ fn iterate_included_files(todos: &mut Vec<Todo>, gi: &gitignore::File) -> Result
 
         // TODO support other files besides .py
         if !obj_path.is_dir() && extension == "py" { 
-            get_todos(&obj_path, todos)?;
+            get_todos(&obj_path, todos).unwrap();
         }
     }
     
@@ -93,7 +100,15 @@ fn get_todos(path: &PathBuf, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
     let file_name = path.file_name().to_owned().unwrap();
     let mut line_number = 0;
 
-    for line in fs::read_to_string(path)?.lines() {
+    let content = match fs::read_to_string(path) {
+        Ok(c) => { c }
+        Err(e) => {
+            println!("ERR: {} {}", path.display(), e);
+            String::from("")
+        }
+    };
+
+    for line in content.lines() {
         line_number += 1;
         if line.contains("TODO") {
             let (_, comment) = line.split_once("TODO").unwrap();
