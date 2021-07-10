@@ -1,0 +1,45 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'todara'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=todara",
+                    "--package=todara"
+                ],
+                "filter": {
+                    "name": "todara",
+                    "kind": "bin"
+                }
+            },
+            "args": ["../../Python 3.0/python-tetris-clone"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'todara'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=todara",
+                    "--package=todara"
+                ],
+                "filter": {
+                    "name": "todara",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
