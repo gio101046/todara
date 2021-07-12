@@ -1,6 +1,7 @@
 use std::ffi::OsString;
 use std::fs;
 use std::env;
+use std::io::Read;
 use std::path::Path;
 use std::path::PathBuf;
 use colored::Colorize;
@@ -26,7 +27,6 @@ fn main() {
         return
     }
 
-    // TODO find safer way to check for gitignore (windows compatible)
     let gi_exists = path.join(".gitignore").exists();
     if !gi_exists {
         println!("{}", "WRN: .gitignore not found, may output TODOs in dependencies".yellow())
@@ -65,15 +65,7 @@ fn traverse_dir(path: &Path, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
             traverse_dir(&obj_path, todos).unwrap();
         }
         else if obj_path.is_file() {
-            let extension = match obj_path.extension() {
-                Some(ext) => { ext.to_owned().into_string().unwrap() }
-                None => { String::from("") }
-            };
-
-            // TODO support other files besides .py
-            if extension == "py" { 
-                get_todos(&obj_path, todos).unwrap();
-            }
+            get_todos(&obj_path, todos).unwrap();
         }
     }
     
@@ -82,13 +74,7 @@ fn traverse_dir(path: &Path, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
 
 fn iterate_included_files(todos: &mut Vec<Todo>, gi: &gitignore::File) -> Result<(), std::io::Error> {
     for obj_path in gi.included_files().unwrap() {
-        let extension = match obj_path.extension() {
-            Some(ext) => { ext.to_owned().into_string().unwrap() }
-            None => { String::from("") }
-        };
-
-        // TODO support other files besides .py
-        if !obj_path.is_dir() && extension == "py" { 
+        if !obj_path.is_dir() { 
             get_todos(&obj_path, todos).unwrap();
         }
     }
@@ -100,7 +86,7 @@ fn get_todos(path: &PathBuf, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
     let file_name = path.file_name().to_owned().unwrap();
     let mut line_number = 0;
 
-    let content = match fs::read_to_string(path) {
+    let content = match read_file_as_string(path) {
         Ok(c) => { c }
         Err(e) => {
             println!("{} {} {}", "ERR:".red(), path.display(), e.to_string().red());
@@ -119,6 +105,18 @@ fn get_todos(path: &PathBuf, todos: &mut Vec<Todo>) -> Result<(), std::io::Error
     }
 
     Ok(())
+}
+
+/*
+    Will read any file, including binaries, and return a lossy UTF-8 representation 
+    of the file.
+*/
+fn read_file_as_string(path: &PathBuf) -> Result<String, std::io::Error> {
+    let mut file = fs::File::open(path)?;
+    let mut buf = vec![];
+    file.read_to_end(&mut buf)?;
+    
+    Ok(String::from_utf8_lossy(&buf).into_owned())
 }
 
 struct Todo {
